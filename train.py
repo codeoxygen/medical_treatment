@@ -2,8 +2,11 @@ import pandas as pd
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from preprocessing import get_dummies , train_dummies
+from preprocessing import label_encoder , train_dummies , test_encoding
+from sklearn.metrics import accuracy_score
 import numpy as np
+import joblib
+import pickle
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -13,18 +16,29 @@ from sklearn.metrics import accuracy_score
 
 df = pd.read_csv('ADHD Data Set 2.csv')
 df.drop(columns=["Timestamp", "Name"], inplace=True)
-
+df = df.dropna()
 columns_to_drop = ['Diagnosis']
 X = df.drop(columns_to_drop, axis=1)
 y = df['Diagnosis']
 
+y = label_encoder(y)
+
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+column_sequence  = X_train.columns
 
-non_cat_col = ["Age" , "Grade"]
-print(X_test.head(10))
-X_train = X_train.drop(columns=non_cat_col,axis=1)
-X_test = X_test.drop(columns=non_cat_col,axis=1)
+enc_dict = train_dummies(X_train)
 
-ohedict , train = train_dummies(cat_df=X_train,raw_data=X_train)
+encoded_train = test_encoding(X_train, enc_dict)
+encoded_test = test_encoding(X_test, enc_dict)
 
-_, test = train_dummies(cat_df=X_train,raw_data=X_test)
+
+clf = RandomForestClassifier()
+clf.fit(encoded_train,y_train)
+y_pred = clf.predict(encoded_test)
+
+print(f'Test accuracy score : {accuracy_score(y_test , y_pred)}')
+
+joblib.dump(clf, 'model.pkl')
+
+    
+

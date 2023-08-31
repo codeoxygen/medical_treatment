@@ -8,47 +8,46 @@ df = pd.read_csv("ADHD Data Set 2.csv")
 
 import pandas as pd
 
-def get_dummies(train):
 
-    arr = train.values
-    train_arr= arr.reshape(-1,1)
- 
-    enc = OneHotEncoder(handle_unknown='ignore')
-    enc.fit(train_arr)
-    return enc
 
-def train_dummies(cat_df,raw_data):
+def train_dummies(train_df):
+
     onehotencoder_dict = {}
     encoded_X_train = None
-    for col in cat_df.columns:
-        arr = cat_df[col].values
-        train_arr = arr.reshape(-1,1)
+    for col in train_df.columns:
 
-        test_arr = raw_data[col].values
-        test_arr = test_arr.reshape(-1,1)
+        if col not in ["Age" , "Grade"]:
 
-
-        col_enc = OneHotEncoder(handle_unknown='ignore')
-        col_enc.fit(train_arr)
-        onehotencoder_dict[col] = col_enc
-        data = col_enc.transform(test_arr).toarray()
-        print(col_enc.categories_)
-        columns = [ col + "_" + str(x) for  x in col_enc.categories_]
+            arr = train_df[col].values
+            train_arr = arr.reshape(-1,1)
+            col_enc = OneHotEncoder(handle_unknown='ignore')
+            col_enc.fit(train_arr)
+            onehotencoder_dict[col] = col_enc
+            
+            
+    return onehotencoder_dict 
         
-        features = pd.DataFrame(data=data)
-        print(data)
-        if encoded_X_train is None:
-            encoded_X_train = features
-        else:
-            encoded_X_train = pd.concat([encoded_X_train,features],axis = 1)
-    return onehotencoder_dict , encoded_X_train
-        
+def test_encoding(data, enc_dict):
+    output = pd.DataFrame({})
+    for col in data.columns:
+        if col  not in ["Age" , "Grade"]:
+            enc = enc_dict[col] 
+            arr = data[col].values
+            arr = arr.reshape(-1,1)
+            
+            classes = [col + "_" + str(x) for x in enc.categories_[0]]
+            feature = enc.transform(arr).toarray()
 
+            features = pd.DataFrame(feature)
+            features.columns = classes
+            
+            output = pd.concat([output , features],axis =1)
+    return output
 
-
-def label_encoder(data):
-    label_en= data.customer_last_feedback.apply(lambda x: {"bad" :1, "good":2}[x])
-    return data
+def label_encoder(target):
+    labels = target.apply(lambda x : {"Yes":1 , "No":0}[x])
+    
+    return labels
 
 
 
