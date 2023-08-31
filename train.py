@@ -2,8 +2,7 @@ import pandas as pd
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from preprocessing import dummie_encoding
-from sklearn.preprocessing import OneHotEncoder
+from preprocessing import get_dummies , train_dummies
 import numpy as np
 import warnings
 
@@ -19,31 +18,13 @@ columns_to_drop = ['Diagnosis']
 X = df.drop(columns_to_drop, axis=1)
 y = df['Diagnosis']
 
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-labelencoder_dict = {}
-onehotencoder_dict = {}
-encoded_x = None
-column_names = []
+non_cat_col = ["Age" , "Grade"]
+print(X_test.head(10))
+X_train = X_train.drop(columns=non_cat_col,axis=1)
+X_test = X_test.drop(columns=non_cat_col,axis=1)
 
+ohedict , train = train_dummies(cat_df=X_train,raw_data=X_train)
 
-for i in range(0, X.shape[1]):
-
-    feature = X.iloc[:, i].values
-    feature = feature.reshape(X.shape[0], 1)
-    onehot_encoder = OneHotEncoder(sparse=False)
-    feature = onehot_encoder.fit_transform(feature)
-    onehotencoder_dict[i] = onehot_encoder
-    column_names.extend(onehot_encoder.get_feature_names_out(X.columns[i]))
-    if encoded_x is None:
-      encoded_x = feature
-    else:
-      encoded_x = np.concatenate((encoded_x, feature), axis=1)
-
-X_train, X_test, y_train, y_test = train_test_split(encoded_x, y, test_size=0.2, random_state=42)
-
-encoded_df = pd.DataFrame(encoded_x, columns=column_names)
-print(encoded_df.head())
-
-
-
-#X_train, X_test, y_train, y_test = train_test_split(encoded_x, y, test_size=0.2, random_state=42)
+_, test = train_dummies(cat_df=X_train,raw_data=X_test)
